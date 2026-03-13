@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} | Wale Community{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem;max-width:800px">
+  <nav class="breadcrumb">
+    <a href="{% url 'community:feed' %}">Community</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="current">{{ post.title|truncatechars:50 }}</span>
+  </nav>
+
+  <!-- Post -->
+  <div class="post-card" style="margin-bottom:1.5rem">
+    <div class="post-header">
+      <div class="post-avatar" style="width:50px;height:50px;font-size:1.1rem">
+        {% if post.author.profile.avatar_url %}
+          <img src="{{ post.author.profile.avatar_url }}" alt="" style="width:50px;height:50px;border-radius:50%;object-fit:cover" />
+        {% else %}
+          {{ post.author.initials }}
+        {% endif %}
+      </div>
+      <div class="post-meta">
+        <div class="post-author">{{ post.author.full_name }}</div>
+        <div class="post-time">{{ post.created_at|date:"d M Y, H:i" }} · {{ post.views }} views</div>
+      </div>
+      <span class="badge badge-primary" style="margin-left:auto">{{ post.get_post_type_display }}</span>
+    </div>
+
+    <h1 style="font-size:1.4rem;margin-bottom:.85rem">{{ post.title }}</h1>
+
+    {% if post.image %}
+      <div style="border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;max-height:400px">
+        <img src="{{ post.image.url }}" alt="" style="width:100%;object-fit:cover" />
+      </div>
+    {% endif %}
+
+    <div style="font-size:.97rem;line-height:1.8;color:var(--text);margin-bottom:1rem">{{ post.body|linebreaks }}</div>
+
+    {% if post.product_tag %}
+    <a href="{{ post.product_tag.get_absolute_url }}" style="display:inline-flex;align-items:center;gap:.6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem 1rem;text-decoration:none;margin-bottom:1rem">
+      <i class="fas fa-tag" style="color:var(--accent)"></i>
+      <span style="font-size:.88rem;font-weight:600;color:var(--primary)">{{ post.product_tag.name }}</span>
+      <i class="fas fa-external-link-alt" style="font-size:.7rem;color:var(--text-muted)"></i>
+    </a>
+    {% endif %}
+
+    <div style="margin-bottom:.85rem">
+      {% for tag in post.tag_list %}
+        <span class="post-tag">#{{ tag }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="post-actions">
+      {% if user.is_authenticated %}
+      <button class="post-action-btn {% if is_liked %}liked{% endif %}"
+              id="likeBtn"
+              data-post-id="{{ post.pk }}"
+              onclick="toggleLike(this.dataset.postId, this)"
+              data-url="{% url 'community:like_post' post.pk %}">
+        <i class="{% if is_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+        <span id="likeCount">{{ post.like_count }}</span> Likes
+      </button>
+      {% else %}
+      <span class="post-action-btn"><i class="far fa-heart"></i> {{ post.like_count }}</span>
+      {% endif %}
+      <span class="post-action-btn"><i class="far fa-comment"></i> {{ post.comment_count }} Comments</span>
+    </div>
+  </div>
+
+  <!-- Comments -->
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-comments"></i> {{ post.comment_count }} Comment{{ post.comment_count|pluralize }}
+    </div>
+    <div class="card-body">
+
+      {% if user.is_authenticated %}
+      <form method="POST" class="mb-3" style="display:flex;gap:.75rem;align-items:flex-start">
+        {% csrf_token %}
+        <div class="post-avatar" style="flex-shrink:0">
+          {% if user.profile.avatar_url %}
+            <img src="{{ user.profile.avatar_url }}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover" />
+          {% else %}
+            {{ user.initials }}
+          {% endif %}
+        </div>
+        <div style="flex:1">
+          <textarea name="body" class="form-control" rows="3" placeholder="Add a comment…" required></textarea>
+          <div style="margin-top:.5rem;display:flex;justify-content:flex-end">
+            <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+          </div>
+        </div>
+      </form>
+      {% else %}
+        <div class="alert alert-info mb-3">
+          <a href="{% url 'accounts:login' %}?next={{ request.path }}">Login</a> to join the conversation.
+        </div>
+      {% endif %}
+
+      <!-- Comment list -->
+      {% for comment in comments %}
+      <div style="display:flex;gap:.75rem;margin-bottom:1.25rem">
+        <div class="post-avatar" style="flex-shrink:0">
+          {% if comment.author.profile.avatar_url %}
+            <img src="{{ comment.author.profile.avatar_url }}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover" />
+          {% else %}
+            {{ comment.author.initials }}
+          {% endif %}
+        </div>
+        <div style="flex:1">
+          <div style="background:var(--surface-2);border-radius:0 var(--radius) var(--radius) var(--radius);padding:.75rem 1rem">
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+              <span style="font-weight:700;font-size:.9rem">{{ comment.author.full_name }}</span>
+              <span style="font-size:.75rem;color:var(--text-muted)">{{ comment.created_at|timesince }} ago</span>
+            </div>
+            <div style="font-size:.9rem;line-height:1.65">{{ comment.body|linebreaks }}</div>
+          </div>
+
+          <!-- Replies -->
+          {% for reply in comment.replies.all %}
+          <div style="display:flex;gap:.65rem;margin-top:.75rem;margin-left:1.5rem">
+            <div class="post-avatar" style="flex-shrink:0;width:34px;height:34px;font-size:.78rem">
+              {% if reply.author.profile.avatar_url %}
+                <img src="{{ reply.author.profile.avatar_url }}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover" />
+              {% else %}
+                {{ reply.author.initials }}
+              {% endif %}
+            </div>
+            <div style="background:var(--surface-2);border-radius:0 var(--radius) var(--radius) var(--radius);padding:.6rem .85rem;flex:1">
+              <span style="font-weight:700;font-size:.85rem">{{ reply.author.full_name }}</span>
+              <span style="font-size:.73rem;color:var(--text-muted);margin-left:.5rem">{{ reply.created_at|timesince }} ago</span>
+              <div style="font-size:.88rem;margin-top:.3rem">{{ reply.body }}</div>
+            </div>
+          </div>
+          {% endfor %}
+
+          {% if user.is_authenticated %}
+          <button class="post-action-btn" style="font-size:.78rem;margin-top:.35rem"
+                  onclick="document.getElementById('replyForm{{ comment.pk }}').classList.toggle('hidden')">
+            <i class="fas fa-reply"></i> Reply
+          </button>
+          <form method="POST" id="replyForm{{ comment.pk }}" class="hidden" style="margin-top:.5rem;display:flex;gap:.5rem">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" value="{{ comment.pk }}" />
+            <input type="text" name="body" class="form-control" placeholder="Write a reply…" style="font-size:.85rem" required />
+            <button type="submit" class="btn btn-primary btn-sm">Reply</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+        <div style="text-align:center;color:var(--text-muted);padding:1.5rem;font-size:.9rem">
+          No comments yet. Be the first to reply!
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleLike(postId, btn) {
+  fetch(btn.dataset.url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('likeCount').textContent = data.count;
+    const icon = btn.querySelector('i');
+    if (data.liked) { icon.className = 'fas fa-heart'; btn.classList.add('liked'); }
+    else             { icon.className = 'far fa-heart'; btn.classList.remove('liked'); }
+  });
+}
+</script>
+{% endblock %}

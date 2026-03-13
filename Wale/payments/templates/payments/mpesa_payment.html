@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}M-Pesa Payment | Wale Computers{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+  <nav class="breadcrumb">
+    <a href="{% url 'shop:home' %}">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="{% url 'payments:cart' %}">Cart</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="{% url 'payments:checkout' %}">Checkout</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="current">M-Pesa Payment</span>
+  </nav>
+
+  <div class="payment-layout">
+    <!-- Payment form -->
+    <div>
+      <!-- M-Pesa Instructions -->
+      <div class="card mb-3">
+        <div class="card-header" style="background:linear-gradient(135deg,#00a651,#007a3d);color:#fff;border:none">
+          <div class="mpesa-logo-text">M-<span>PESA</span> Payment Instructions</div>
+        </div>
+        <div class="card-body">
+          <div style="background:linear-gradient(135deg,rgba(0,166,81,.08),rgba(0,122,61,.05));border:1px solid rgba(0,166,81,.25);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.5rem">
+            <div style="font-size:.9rem;font-weight:600;color:#007a3d;margin-bottom:1rem">
+              📱 Send <strong>KSh {{ order.total|floatformat:0 }}</strong> via M-Pesa to:
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;text-align:center">
+              <div style="background:#fff;border-radius:var(--radius);padding:1rem;border:1px solid rgba(0,166,81,.2)">
+                <div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">Paybill Number</div>
+                <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:#007a3d">522522</div>
+              </div>
+              <div style="background:#fff;border-radius:var(--radius);padding:1rem;border:1px solid rgba(0,166,81,.2)">
+                <div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">Account Number</div>
+                <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:#007a3d">5530150</div>
+              </div>
+            </div>
+            <div style="margin-top:.85rem;font-size:.82rem;color:var(--text-muted);text-align:center">
+              Account name: <strong>Wale Computers</strong>
+            </div>
+          </div>
+
+          <!-- Steps -->
+          <div class="payment-steps">
+            <div class="payment-step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <div class="step-title">Open M-Pesa on your phone</div>
+                <p>Go to M-Pesa menu on your Safaricom line</p>
+              </div>
+            </div>
+            <div class="payment-step">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <div class="step-title">Select "Lipa na M-Pesa" → "Pay Bill"</div>
+                <p>Enter <strong>522522</strong> as the Business Number</p>
+              </div>
+            </div>
+            <div class="payment-step">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <div class="step-title">Enter Account Number: <strong>5530150</strong></div>
+                <p>This identifies your payment to Wale Computers</p>
+              </div>
+            </div>
+            <div class="payment-step">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <div class="step-title">Enter Amount: <strong>KSh {{ order.total|floatformat:0 }}</strong></div>
+                <p>Enter your M-Pesa PIN to confirm</p>
+              </div>
+            </div>
+            <div class="payment-step">
+              <div class="step-num">5</div>
+              <div class="step-content">
+                <div class="step-title">Note your confirmation code</div>
+                <p>You'll receive an SMS from M-Pesa with a code like <em>QHX12345AB</em> – enter it below</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation form -->
+      <div class="card">
+        <div class="card-header"><i class="fas fa-check-circle"></i> Enter Payment Confirmation</div>
+        <div class="card-body">
+          {% if errors %}
+            <div class="alert alert-danger">Please correct the errors below.</div>
+          {% endif %}
+
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+              <label class="form-label">M-Pesa Phone Number *</label>
+              <input type="tel" name="mpesa_phone" class="form-control {% if errors.mpesa_phone %}is-error{% endif %}"
+                     value="{{ form_data.mpesa_phone|default:user.profile.mpesa_phone }}"
+                     placeholder="07XXXXXXXX" required />
+              {% if errors.mpesa_phone %}<div class="form-error">{{ errors.mpesa_phone }}</div>{% endif %}
+              <div class="form-help">The number you used to send the M-Pesa payment</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">M-Pesa Transaction Code *</label>
+              <input type="text" name="transaction_code" class="form-control {% if errors.transaction_code %}is-error{% endif %}"
+                     value="{{ form_data.transaction_code|default:'' }}"
+                     placeholder="e.g. QHX12345AB" required maxlength="20"
+                     style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:1rem" />
+              {% if errors.transaction_code %}<div class="form-error">{{ errors.transaction_code }}</div>{% endif %}
+              <div class="form-help">Found in the M-Pesa confirmation SMS</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Amount Paid (KSh) *</label>
+              <input type="number" name="amount_paid" class="form-control {% if errors.amount_paid %}is-error{% endif %}"
+                     value="{{ form_data.amount_paid|default:order.total }}"
+                     step="0.01" min="1" required />
+              {% if errors.amount_paid %}<div class="form-error">{{ errors.amount_paid }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Payment Screenshot (optional)</label>
+              <input type="file" name="payment_screenshot" class="form-control" accept="image/*" />
+              <div class="form-help">Upload a screenshot of your M-Pesa confirmation message (speeds up verification)</div>
+            </div>
+
+            <div style="background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.3);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:1.25rem;font-size:.85rem">
+              <strong>⏱️ What happens next?</strong> Our team will verify your payment within <strong>30 minutes</strong> (Mon–Sat 8am–6pm). You'll receive a confirmation email once verified.
+            </div>
+
+            <button type="submit" class="btn btn-accent btn-lg btn-block">
+              <i class="fas fa-paper-plane"></i> Submit Payment Confirmation
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div>
+      <div class="card">
+        <div class="card-header"><i class="fas fa-file-invoice"></i> Order #{{ order.order_number }}</div>
+        <div class="card-body" style="padding:0">
+          {% for item in order.items.all %}
+          <div class="order-summary-item" style="padding:.85rem 1.25rem">
+            {% if item.product.primary_image %}
+              <img src="{{ item.product.primary_image.image.url }}" class="order-item-img" alt="{{ item.product.name }}" />
+            {% else %}
+              <div class="order-item-img" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem">💻</div>
+            {% endif %}
+            <div style="flex:1">
+              <div class="order-item-name">{{ item.product.name|truncatechars:35 }}</div>
+              <div class="order-item-qty">Qty: {{ item.quantity }}</div>
+            </div>
+            <div class="order-item-price">KSh {{ item.subtotal|floatformat:0 }}</div>
+          </div>
+          {% endfor %}
+          <div style="padding:.85rem 1.25rem;border-top:1px solid var(--border)">
+            <div class="order-total-row">
+              <span>Subtotal</span>
+              <span>KSh {{ order.subtotal|floatformat:0 }}</span>
+            </div>
+            <div class="order-total-row">
+              <span>Shipping</span>
+              <span>KSh {{ order.shipping_fee|floatformat:0 }}</span>
+            </div>
+            <div class="order-total-row total">
+              <span>Total</span>
+              <span>KSh {{ order.total|floatformat:0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-body" style="font-size:.85rem">
+          <div style="font-weight:600;margin-bottom:.5rem">📦 Shipping to:</div>
+          <div style="color:var(--text-muted)">
+            {{ order.full_name }}<br />
+            {{ order.address }}<br />
+            {{ order.city }}, {{ order.county|title }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

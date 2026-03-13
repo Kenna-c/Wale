@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}New Post | Wale Community{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem;max-width:720px">
+  <nav class="breadcrumb">
+    <a href="{% url 'community:feed' %}">Community</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="current">New Post</span>
+  </nav>
+
+  <div class="card">
+    <div class="card-header"><i class="fas fa-pencil-alt"></i> Create a Post</div>
+    <div class="card-body">
+      {% if messages %}{% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Post Type</label>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            {% for val, lbl in post_types %}
+            <label style="display:flex;align-items:center;gap:.35rem;padding:.45rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.85rem;transition:var(--transition)" class="type-label">
+              <input type="radio" name="post_type" value="{{ val }}" {% if forloop.first %}checked{% endif %} style="display:none" />
+              {{ lbl }}
+            </label>
+            {% empty %}
+              {% for val, lbl in default_types %}
+              <label style="display:flex;align-items:center;gap:.35rem;padding:.45rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.85rem;transition:var(--transition)" class="type-label">
+                <input type="radio" name="post_type" value="{{ val }}" {% if forloop.first %}checked{% endif %} style="display:none" />
+                {{ lbl }}
+              </label>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. Best budget laptop under KSh 50,000?" required maxlength="250" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Content *</label>
+          <textarea name="body" class="form-control" rows="7" placeholder="Share your thoughts, experience, or question…" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tag a Product (optional)</label>
+          <select name="product_tag" class="form-control">
+            <option value="">– Select a product –</option>
+            {% for product in products %}
+              <option value="{{ product.pk }}">{{ product.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags (optional)</label>
+          <input type="text" name="tags" class="form-control" placeholder="gaming, laptop, budget (comma-separated)" />
+          <div class="form-help">Helps others discover your post</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Image (optional)</label>
+          <input type="file" name="image" class="form-control" accept="image/*" />
+        </div>
+
+        <div style="display:flex;gap:1rem">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-paper-plane"></i> Publish Post
+          </button>
+          <a href="{% url 'community:feed' %}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Highlight selected post type
+document.querySelectorAll('.type-label').forEach(label => {
+  const radio = label.querySelector('input[type="radio"]');
+  function update() {
+    document.querySelectorAll('.type-label').forEach(l => {
+      l.style.borderColor = 'var(--border)';
+      l.style.background = 'var(--surface)';
+      l.style.color = 'var(--text)';
+    });
+    if (radio.checked) {
+      label.style.borderColor = 'var(--primary)';
+      label.style.background = 'rgba(10,37,64,.07)';
+      label.style.color = 'var(--primary)';
+      label.style.fontWeight = '600';
+    }
+  }
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('input[name="post_type"]').forEach(r => r.dispatchEvent(new Event('change')));
+    if (radio.checked) {
+      label.style.borderColor = 'var(--primary)';
+      label.style.background = 'rgba(10,37,64,.07)';
+      label.style.fontWeight = '600';
+    }
+  });
+  label.addEventListener('click', () => { radio.checked = true; radio.dispatchEvent(new Event('change')); });
+  if (radio.checked) update();
+});
+</script>
+{% endblock %}

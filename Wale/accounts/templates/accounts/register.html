@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Create Account | Wale Computers{% endblock %}
+
+{% block content %}
+<div class="auth-page" style="padding:2rem">
+  <div class="auth-card" style="max-width:520px">
+    <div class="auth-card-header">
+      <div class="brand-logo">💻</div>
+      <h2>Create Account</h2>
+      <p>Join thousands of Wale Computers customers</p>
+    </div>
+    <div class="auth-card-body">
+      {% if errors %}
+        <div class="alert alert-danger">
+          <strong>Please fix the errors below</strong>
+        </div>
+      {% endif %}
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" name="first_name" class="form-control {% if errors.first_name %}is-error{% endif %}"
+                   value="{{ form_data.first_name|default:'' }}" placeholder="John" required />
+            {% if errors.first_name %}<div class="form-error">{{ errors.first_name }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" class="form-control"
+                   value="{{ form_data.last_name|default:'' }}" placeholder="Doe" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input type="email" name="email" class="form-control {% if errors.email %}is-error{% endif %}"
+                 value="{{ form_data.email|default:'' }}" placeholder="you@example.com" required />
+          {% if errors.email %}<div class="form-error">{{ errors.email }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input type="text" name="username" class="form-control {% if errors.username %}is-error{% endif %}"
+                 value="{{ form_data.username|default:'' }}" placeholder="johndoe_ke" required />
+          {% if errors.username %}<div class="form-error">{{ errors.username }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone (optional)</label>
+          <input type="tel" name="phone" class="form-control"
+                 value="{{ form_data.phone|default:'' }}" placeholder="07XXXXXXXX" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <div style="position:relative">
+            <input type="password" name="password1" id="pwd1" class="form-control {% if errors.password1 %}is-error{% endif %}"
+                   placeholder="Min. 8 characters" required />
+            <button type="button" onclick="togglePwd('pwd1',this)" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted)">
+              <i class="far fa-eye"></i>
+            </button>
+          </div>
+          {% if errors.password1 %}<div class="form-error">{{ errors.password1 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          <input type="password" name="password2" class="form-control {% if errors.password2 %}is-error{% endif %}"
+                 placeholder="Re-enter password" required />
+          {% if errors.password2 %}<div class="form-error">{{ errors.password2 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:.6rem">
+          <input type="checkbox" name="terms" id="terms" required style="accent-color:var(--primary);margin-top:.2rem;width:15px;height:15px" />
+          <label for="terms" style="font-size:.85rem;cursor:pointer;color:var(--text-muted)">
+            I agree to the <a href="#" style="color:var(--primary);font-weight:600">Terms of Service</a> and 
+            <a href="#" style="color:var(--primary);font-weight:600">Privacy Policy</a>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-accent btn-lg btn-block">
+          Create My Account
+        </button>
+      </form>
+    </div>
+    <div class="auth-footer">
+      Already have an account? <a href="{% url 'accounts:login' %}">Login here</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePwd(id, btn) {
+  const f = document.getElementById(id);
+  if (f.type === 'password') { f.type = 'text'; btn.innerHTML = '<i class="far fa-eye-slash"></i>'; }
+  else { f.type = 'password'; btn.innerHTML = '<i class="far fa-eye"></i>'; }
+}
+</script>
+{% endblock %}

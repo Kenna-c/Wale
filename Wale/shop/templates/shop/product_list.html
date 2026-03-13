@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if active_category %}{{ active_category.name }} – {% endif %}Shop | Wale Computers
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="{% url 'shop:home' %}">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="{% url 'shop:product_list' %}">Shop</a>
+    {% if active_category %}
+      <span class="breadcrumb-sep">›</span>
+      <span class="current">{{ active_category.name }}</span>
+    {% endif %}
+  </nav>
+
+  <div class="shop-layout">
+    <!-- ═══ FILTERS SIDEBAR ═══ -->
+    <aside class="filters-sidebar">
+      <div class="flex-between mb-2">
+        <h3 style="font-size:1rem">Filters</h3>
+        <a href="{% url 'shop:product_list' %}" class="btn btn-sm btn-outline" style="font-size:.75rem">Clear All</a>
+      </div>
+
+      <form method="GET" id="filterForm">
+        {% if filters.category %}
+          <input type="hidden" name="category" value="{{ filters.category }}" />
+        {% endif %}
+
+        <!-- Categories -->
+        <div class="filter-section">
+          <div class="filter-title">Category</div>
+          {% for cat in categories %}
+          <label class="filter-option">
+            <input type="radio" name="category" value="{{ cat.slug }}"
+              {% if filters.category == cat.slug %}checked{% endif %}
+              onchange="this.form.submit()" />
+            {{ cat.name }}
+            <span class="filter-count">{{ cat.products.count }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <!-- Brands -->
+        {% if brands %}
+        <div class="filter-section">
+          <div class="filter-title">Brand</div>
+          {% for brand in brands %}
+          <label class="filter-option">
+            <input type="checkbox" name="brand" value="{{ brand.slug }}"
+              {% if filters.brand == brand.slug %}checked{% endif %}
+              onchange="this.form.submit()" />
+            {{ brand.name }}
+          </label>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Condition -->
+        <div class="filter-section">
+          <div class="filter-title">Condition</div>
+          {% for value, label in condition_choices %}
+          <label class="filter-option">
+            <input type="radio" name="condition" value="{{ value }}"
+              {% if filters.condition == value %}checked{% endif %}
+              onchange="this.form.submit()" />
+            {{ label }}
+          </label>
+          {% endfor %}
+          <label class="filter-option">
+            <input type="radio" name="condition" value=""
+              {% if not filters.condition %}checked{% endif %}
+              onchange="this.form.submit()" />
+            All Conditions
+          </label>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-section">
+          <div class="filter-title">Price (KSh)</div>
+          <div class="price-range">
+            <input class="form-control" type="number" name="min_price" placeholder="Min"
+                   value="{{ filters.min_price }}" min="0" />
+            <span style="color:var(--text-muted)">–</span>
+            <input class="form-control" type="number" name="max_price" placeholder="Max"
+                   value="{{ filters.max_price }}" min="0" />
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm btn-block mt-2">Apply</button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- ═══ PRODUCTS ═══ -->
+    <main>
+      <!-- Toolbar -->
+      <div class="flex-between mb-3" style="flex-wrap:wrap;gap:.75rem">
+        <div>
+          <h2 style="font-size:1.15rem;margin-bottom:.1rem">
+            {% if active_category %}{{ active_category.name }}{% else %}All Products{% endif %}
+          </h2>
+          <p class="text-muted" style="font-size:.85rem;margin:0">
+            {{ products.paginator.count }} product{{ products.paginator.count|pluralize }}
+          </p>
+        </div>
+        <div class="flex gap-1" style="align-items:center">
+          <label for="sortSelect" class="text-muted" style="font-size:.85rem;white-space:nowrap">Sort by:</label>
+          <select id="sortSelect" class="form-control" style="width:auto;padding:.4rem .75rem;font-size:.85rem"
+                  onchange="window.location.search='?sort='+this.value+'{% if filters.category %}&category={{ filters.category }}{% endif %}'">
+            <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest</option>
+            <option value="price_asc"   {% if sort == 'price_asc'   %}selected{% endif %}>Price: Low → High</option>
+            <option value="price_desc"  {% if sort == 'price_desc'  %}selected{% endif %}>Price: High → Low</option>
+            <option value="popular"     {% if sort == 'popular'     %}selected{% endif %}>Most Popular</option>
+            <option value="rating"      {% if sort == 'rating'      %}selected{% endif %}>Top Rated</option>
+          </select>
+        </div>
+      </div>
+
+      {% if products %}
+        <div class="products-grid">
+          {% for product in products %}
+            {% include 'shop/_product_card.html' %}
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="pagination">
+          {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}&sort={{ sort }}{% if filters.category %}&category={{ filters.category }}{% endif %}" class="page-btn">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          {% endif %}
+          {% for num in products.paginator.page_range %}
+            {% if num == products.number %}
+              <span class="page-btn active">{{ num }}</span>
+            {% elif num|add:-2 <= products.number and products.number <= num|add:2 %}
+              <a href="?page={{ num }}&sort={{ sort }}{% if filters.category %}&category={{ filters.category }}{% endif %}" class="page-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}&sort={{ sort }}{% if filters.category %}&category={{ filters.category }}{% endif %}" class="page-btn">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <h3>No products found</h3>
+          <p>Try adjusting your filters or search for something different.</p>
+          <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Clear Filters</a>
+        </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+{% endblock %}

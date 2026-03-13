@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Profile | Wale Computers{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+  <div class="profile-layout">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside>
+      <div class="card">
+        <div class="card-body">
+          <div class="profile-avatar-wrap">
+            {% if profile.avatar_url %}
+              <img src="{{ profile.avatar_url }}" class="profile-avatar" alt="{{ user.full_name }}" />
+            {% else %}
+              <div class="profile-avatar" style="display:flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;font-family:var(--font-display);font-size:2rem;font-weight:800">
+                {{ user.initials }}
+              </div>
+            {% endif %}
+            <label for="avatarUpload" class="profile-avatar-edit" title="Change photo">
+              <i class="fas fa-camera"></i>
+            </label>
+          </div>
+          <div class="profile-name">{{ user.full_name }}</div>
+          <div class="profile-email">{{ user.email }}</div>
+          {% if user.phone %}
+            <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem">📞 {{ user.phone }}</div>
+          {% endif %}
+          <div style="display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap">
+            {% if user.is_verified %}
+              <span class="badge badge-success">✓ Verified</span>
+            {% endif %}
+            {% if profile.county %}
+              <span class="badge badge-primary">📍 {{ profile.county|title }}</span>
+            {% endif %}
+          </div>
+
+          <nav class="profile-nav">
+            <a href="{% url 'accounts:profile' %}" class="profile-nav-item active">
+              <i class="fas fa-user"></i> My Profile
+            </a>
+            <a href="{% url 'accounts:orders' %}" class="profile-nav-item">
+              <i class="fas fa-box"></i> My Orders
+            </a>
+            <a href="{% url 'shop:favorites' %}" class="profile-nav-item">
+              <i class="fas fa-heart"></i> Saved Items
+            </a>
+            <a href="{% url 'community:feed' %}" class="profile-nav-item">
+              <i class="fas fa-users"></i> Community
+            </a>
+            <a href="{% url 'accounts:settings' %}" class="profile-nav-item">
+              <i class="fas fa-cog"></i> Settings
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="card mt-3">
+        <div class="card-body" style="padding:1rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;text-align:center">
+            <div>
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--primary)">{{ orders|length }}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">Orders</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--primary)">{{ user.favorites.count }}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">Saved</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--primary)">{{ user.reviews.count }}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">Reviews</div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--primary)">{{ user.posts.count }}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">Posts</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <div>
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Edit Profile Form -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <i class="fas fa-user-edit"></i> Edit Profile
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="avatar" id="avatarUpload" accept="image/*" style="display:none" onchange="this.form.submit()" />
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" name="phone" class="form-control" value="{{ user.phone }}" placeholder="07XXXXXXXX" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea name="bio" class="form-control" placeholder="Tell us about yourself…" rows="3">{{ user.bio }}</textarea>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label class="form-label">County</label>
+                <select name="county" class="form-control">
+                  <option value="">Select County</option>
+                  {% for val, label in profile_counties %}
+                  <option value="{{ val }}" {% if profile.county == val %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">City / Town</label>
+                <input type="text" name="city" class="form-control" value="{{ profile.city }}" placeholder="e.g. Westlands" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Delivery Address</label>
+              <textarea name="address" class="form-control" rows="2" placeholder="Street, building, area…">{{ profile.address }}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">M-Pesa Phone Number</label>
+              <input type="tel" name="mpesa_phone" class="form-control" value="{{ profile.mpesa_phone }}" placeholder="07XXXXXXXX" />
+              <div class="form-help">Used to pre-fill M-Pesa payment forms</div>
+            </div>
+
+            <div style="display:flex;gap:1.5rem;margin-bottom:1.25rem">
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" name="newsletter" {% if profile.newsletter %}checked{% endif %} style="accent-color:var(--primary);width:15px;height:15px" />
+                Email Newsletter
+              </label>
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem">
+                <input type="checkbox" name="notifications" {% if profile.notifications %}checked{% endif %} style="accent-color:var(--primary);width:15px;height:15px" />
+                Order Notifications
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      {% if orders %}
+      <div class="card">
+        <div class="card-header flex-between">
+          <span><i class="fas fa-box"></i> Recent Orders</span>
+          <a href="{% url 'accounts:orders' %}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="padding:0">
+          {% for order in orders %}
+          <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700;font-size:.92rem">#{{ order.order_number }}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">{{ order.created_at|date:"d M Y" }}</div>
+            </div>
+            <span class="badge {% if order.status == 'delivered' %}badge-success{% elif order.status == 'cancelled' %}badge-danger{% elif order.status == 'paid' %}badge-success{% else %}badge-gold{% endif %}">
+              {{ order.get_status_display }}
+            </span>
+            <div style="margin-left:auto;font-weight:700">KSh {{ order.total|floatformat:0 }}</div>
+            <a href="{{ order.get_absolute_url }}" class="btn btn-outline btn-sm">View</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

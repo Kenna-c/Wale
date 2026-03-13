@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Wale Computers & Accessories{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Your trusted partner for computers, laptops, accessories and tech solutions in Kenya.{% endblock %}" />
+  <link rel="icon" href="{% block favicon %}data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a2540'/><text y='.9em' font-size='70' x='15'>💻</text></svg>{% endblock %}" />
+  <link rel="stylesheet" href="{% load static %}{% static 'css/base.css' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ══════════════════════ NAVBAR ══════════════════════ -->
+<nav class="navbar">
+  <div class="container">
+    <a href="{% url 'shop:home' %}" class="navbar-brand">
+      <div class="brand-icon">💻</div>
+      <div>
+        Wale Computers
+        <small>&amp; Accessories</small>
+      </div>
+    </a>
+
+    <div class="navbar-search">
+      <i class="fas fa-search search-icon"></i>
+      <form action="{% url 'shop:search' %}" method="GET">
+        <input type="text" name="q" placeholder="Search products…" value="{{ request.GET.q }}" autocomplete="off" />
+      </form>
+    </div>
+
+    <nav class="navbar-nav">
+      <a href="{% url 'shop:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i><span class="nav-text">Home</span>
+      </a>
+      <a href="{% url 'shop:product_list' %}" class="{% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-store"></i><span class="nav-text">Shop</span>
+      </a>
+      <a href="{% url 'community:feed' %}">
+        <i class="fas fa-users"></i><span class="nav-text">Community</span>
+      </a>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'shop:favorites' %}" style="position:relative">
+          <i class="fas fa-heart"></i><span class="nav-text">Saved</span>
+          {% if favorites_count %}
+            <span class="nav-badge">{{ favorites_count }}</span>
+          {% endif %}
+        </a>
+        <a href="{% url 'payments:cart' %}" style="position:relative">
+          <i class="fas fa-shopping-cart"></i><span class="nav-text">Cart</span>
+          {% if cart_count %}
+            <span class="nav-badge">{{ cart_count }}</span>
+          {% endif %}
+        </a>
+        <div class="dropdown">
+          <a href="#" style="gap:.5rem">
+            {% if user.profile.avatar_url %}
+              <img src="{{ user.profile.avatar_url }}" class="navbar-avatar" alt="{{ user.get_full_name }}" />
+            {% else %}
+              <div class="navbar-avatar" style="background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              </div>
+            {% endif %}
+            <i class="fas fa-chevron-down" style="font-size:.65rem;opacity:.6"></i>
+          </a>
+          <div class="dropdown-menu">
+            <a href="{% url 'accounts:profile' %}" class="dropdown-item"><i class="fas fa-user"></i> My Profile</a>
+            <a href="{% url 'accounts:orders' %}" class="dropdown-item"><i class="fas fa-box"></i> My Orders</a>
+            <a href="{% url 'shop:favorites' %}" class="dropdown-item"><i class="fas fa-heart"></i> Favorites</a>
+            <div class="dropdown-divider"></div>
+            <a href="{% url 'accounts:settings' %}" class="dropdown-item"><i class="fas fa-cog"></i> Settings</a>
+            <form method="POST" action="{% url 'accounts:logout' %}" style="margin:0">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item" style="color:var(--danger)">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.3)">Login</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-accent btn-sm">Sign Up</a>
+      {% endif %}
+
+      <button class="navbar-toggle" id="navToggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+    </nav>
+  </div>
+</nav>
+
+<!-- ══════════════════════ MESSAGES ══════════════════════ -->
+{% if messages %}
+  <div class="toast-container" id="toastContainer">
+    {% for message in messages %}
+      <div class="toast {% if message.tags %}{{ message.tags }}{% endif %}" data-auto-dismiss>
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- ══════════════════════ CONTENT ══════════════════════ -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ══════════════════════ FOOTER ══════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">💻 Wale Computers &amp; Accessories</div>
+        <p class="footer-tagline">Your trusted tech partner in Kenya. Quality products, competitive prices, exceptional service.</p>
+        <div class="footer-social">
+          <a class="social-btn" href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a class="social-btn" href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a class="social-btn" href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a class="social-btn" href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <nav class="footer-links">
+          <a href="{% url 'shop:product_list' %}">All Products</a>
+          <a href="{% url 'shop:product_list' %}?category=laptops">Laptops</a>
+          <a href="{% url 'shop:product_list' %}?category=desktops">Desktops</a>
+          <a href="{% url 'shop:product_list' %}?category=accessories">Accessories</a>
+          <a href="{% url 'shop:product_list' %}?category=networking">Networking</a>
+        </nav>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <nav class="footer-links">
+          <a href="{% url 'accounts:register' %}">Create Account</a>
+          <a href="{% url 'accounts:login' %}">Login</a>
+          <a href="{% url 'accounts:orders' %}">My Orders</a>
+          <a href="{% url 'shop:favorites' %}">Saved Items</a>
+          <a href="{% url 'community:feed' %}">Community</a>
+        </nav>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <nav class="footer-links">
+          <a href="#">Help Center</a>
+          <a href="#">Track Order</a>
+          <a href="#">Returns &amp; Refunds</a>
+          <a href="#">Contact Us</a>
+          <a href="#">About Wale</a>
+        </nav>
+        <div style="margin-top:1rem;font-size:.82rem">
+          <div style="color:rgba(255,255,255,.9);font-weight:600">📞 +254 700 000 000</div>
+          <div>Mon–Sat 8am–6pm</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© {% now "Y" %} Wale Computers &amp; Accessories. All rights reserved.</span>
+      <div style="display:flex;gap:1.5rem">
+        <a href="#" style="color:rgba(255,255,255,.5);font-size:.8rem">Privacy Policy</a>
+        <a href="#" style="color:rgba(255,255,255,.5);font-size:.8rem">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+{% block extra_js %}{% endblock %}
+
+<script>
+// ── Toast auto-dismiss ──
+document.querySelectorAll('[data-auto-dismiss]').forEach(el => {
+  setTimeout(() => {
+    el.style.animation = 'none';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(100%)';
+    el.style.transition = '.3s ease';
+    setTimeout(() => el.remove(), 300);
+  }, 4000);
+});
+
+// ── Mobile nav toggle ──
+const navToggle = document.getElementById('navToggle');
+const navbarNav = document.querySelector('.navbar-nav');
+if (navToggle) {
+  navToggle.addEventListener('click', () => {
+    navbarNav.classList.toggle('mobile-open');
+  });
+}
+
+// ── Dropdown keyboard ──
+document.querySelectorAll('.dropdown').forEach(dd => {
+  const toggle = dd.querySelector('a');
+  toggle.addEventListener('click', e => {
+    if (dd.querySelector('.dropdown-menu')) {
+      e.preventDefault();
+      dd.classList.toggle('open');
+    }
+  });
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+  }
+});
+</script>
+
+</body>
+</html>

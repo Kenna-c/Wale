@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Community | Wale Computers{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,var(--primary),#1e4a78);border-radius:var(--radius-lg);padding:2rem 2.5rem;margin-bottom:2rem;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+    <div>
+      <h1 style="color:#fff;margin-bottom:.35rem">🤝 Wale Community</h1>
+      <p style="color:rgba(255,255,255,.75);margin:0;font-size:.95rem">Share recommendations, ask questions, connect with fellow tech enthusiasts in Kenya</p>
+    </div>
+    {% if user.is_authenticated %}
+      <a href="{% url 'community:create_post' %}" class="btn btn-accent btn-lg">
+        <i class="fas fa-plus"></i> New Post
+      </a>
+    {% else %}
+      <a href="{% url 'accounts:login' %}" class="btn btn-accent">
+        <i class="fas fa-sign-in-alt"></i> Join Community
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="community-layout">
+    <!-- ═══ FEED ═══ -->
+    <main>
+      <!-- Type filter tabs -->
+      <div class="tabs" style="margin-bottom:1.25rem">
+        <a href="{% url 'community:feed' %}" class="tab {% if not active_type %}active{% endif %}">All Posts</a>
+        <a href="?type=recommendation" class="tab {% if active_type == 'recommendation' %}active{% endif %}">💡 Recommendations</a>
+        <a href="?type=question" class="tab {% if active_type == 'question' %}active{% endif %}">❓ Questions</a>
+        <a href="?type=deal" class="tab {% if active_type == 'deal' %}active{% endif %}">🏷️ Deals</a>
+        <a href="?type=discussion" class="tab {% if active_type == 'discussion' %}active{% endif %}">💬 Discussion</a>
+      </div>
+
+      {% for post in posts %}
+      <div class="post-card">
+        <div class="post-header">
+          <div class="post-avatar">
+              {% if post.author_avatar_url %}
+                <img src="{{ post.author_avatar_url }}" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover" />
+              {% else %}
+                {{ post.author.initials }}
+              {% endif %}
+          </div>
+          <div class="post-meta">
+            <div class="post-author">{{ post.author.full_name }}</div>
+            <div class="post-time">{{ post.created_at|timesince }} ago</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
+            {% if post.is_pinned %}
+              <span class="badge badge-accent">📌 Pinned</span>
+            {% endif %}
+            <span class="badge {% if post.post_type == 'recommendation' %}badge-success{% elif post.post_type == 'deal' %}badge-accent{% elif post.post_type == 'question' %}badge-primary{% else %}badge-primary{% endif %}">
+              {{ post.get_post_type_display }}
+            </span>
+          </div>
+        </div>
+
+        <a href="{{ post.get_absolute_url }}" style="text-decoration:none">
+          <div class="post-title">{{ post.title }}</div>
+        </a>
+        <div class="post-body">{{ post.body|truncatewords:40 }}</div>
+
+        {% if post.product_tag %}
+        <div style="background:var(--surface-2);border-radius:var(--radius);padding:.65rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;font-size:.85rem">
+          <i class="fas fa-tag" style="color:var(--accent)"></i>
+          <span>Product: </span>
+          <a href="{{ post.product_tag.get_absolute_url }}" style="color:var(--primary);font-weight:600">{{ post.product_tag.name }}</a>
+        </div>
+        {% endif %}
+
+        {% if post.image %}
+        <div style="border-radius:var(--radius);overflow:hidden;margin-bottom:.85rem;max-height:300px">
+          <img src="{{ post.image.url }}" alt="" style="width:100%;object-fit:cover" />
+        </div>
+        {% endif %}
+
+        {% for tag in post.tag_list %}
+          <span class="post-tag">#{{ tag }}</span>
+        {% endfor %}
+
+        <div class="post-actions">
+          {% if user.is_authenticated %}
+          <button class="post-action-btn {% if post.pk in liked_ids %}liked{% endif %}"
+                  onclick="toggleLike('{{ post.pk }}', this)"
+                  data-url="{% url 'community:like_post' post.pk %}">
+            <i class="{% if post.pk in liked_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+            <span class="like-count">{{ post.like_count }}</span>
+          </button>
+          {% else %}
+          <span class="post-action-btn">
+            <i class="far fa-heart"></i> {{ post.like_count }}
+          </span>
+          {% endif %}
+          <a href="{{ post.get_absolute_url }}" class="post-action-btn">
+            <i class="far fa-comment"></i> {{ post.comment_count }}
+          </a>
+          <span class="post-action-btn" style="margin-left:auto;cursor:default">
+            <i class="far fa-eye"></i> {{ post.views }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+        <div class="empty-state card card-body">
+          <div class="empty-state-icon">💬</div>
+          <h3>No posts yet</h3>
+          <p>Be the first to share something with the community!</p>
+          {% if user.is_authenticated %}
+            <a href="{% url 'community:create_post' %}" class="btn btn-primary">Create Post</a>
+          {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary">Login to Post</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <!-- Pagination -->
+      {% if posts.has_other_pages %}
+      <div class="pagination">
+        {% if posts.has_previous %}
+          <a href="?page={{ posts.previous_page_number }}{% if active_type %}&type={{ active_type }}{% endif %}" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+        {% endif %}
+        {% for num in posts.paginator.page_range %}
+          {% if num == posts.number %}
+            <span class="page-btn active">{{ num }}</span>
+          {% elif num|add:-2 <= posts.number and posts.number <= num|add:2 %}
+            <a href="?page={{ num }}{% if active_type %}&type={{ active_type }}{% endif %}" class="page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if posts.has_next %}
+          <a href="?page={{ posts.next_page_number }}{% if active_type %}&type={{ active_type }}{% endif %}" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </main>
+
+    <!-- ═══ RIGHT SIDEBAR ═══ -->
+    <aside>
+      <!-- Chat Rooms -->
+      <div class="card mb-3">
+        <div class="card-header"><i class="fas fa-comments"></i> Live Chat Rooms</div>
+        <div class="card-body" style="padding:.5rem">
+          {% for room in rooms %}
+          <a href="{% url 'community:chat' room.slug %}" style="display:flex;align-items:center;gap:.75rem;padding:.75rem .85rem;border-radius:8px;transition:var(--transition);text-decoration:none;color:var(--text)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+            <div class="chat-status-dot"></div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.88rem">{{ room.name }}</div>
+              {% if room.description %}
+                <div style="font-size:.75rem;color:var(--text-muted)">{{ room.description|truncatechars:40 }}</div>
+              {% endif %}
+            </div>
+            <i class="fas fa-chevron-right" style="font-size:.7rem;color:var(--text-light)"></i>
+          </a>
+          {% empty %}
+            <div style="padding:.75rem;text-align:center;color:var(--text-muted);font-size:.85rem">No chat rooms yet.</div>
+          {% endfor %}
+          {% if user.is_authenticated %}
+            <div style="padding:.5rem .85rem">
+              <a href="{% url 'community:chat_list' %}" class="btn btn-outline btn-sm btn-block">
+                <i class="fas fa-comments"></i> All Rooms
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Guidelines -->
+      <div class="card">
+        <div class="card-header"><i class="fas fa-shield-alt"></i> Community Guidelines</div>
+        <div class="card-body">
+          <ul style="display:flex;flex-direction:column;gap:.6rem;font-size:.85rem;color:var(--text-muted)">
+            <li>✅ Share honest product recommendations</li>
+            <li>✅ Help answer tech questions</li>
+            <li>✅ Report genuine deals you find</li>
+            <li>❌ No spam or self-promotion</li>
+            <li>❌ No hate speech or harassment</li>
+            <li>❌ No fake reviews or misleading info</li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleLike(postId, btn) {
+  const url = btn.dataset.url;
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '',
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.querySelector('.like-count').textContent = data.count;
+    const icon = btn.querySelector('i');
+    if (data.liked) {
+      icon.className = 'fas fa-heart';
+      btn.classList.add('liked');
+    } else {
+      icon.className = 'far fa-heart';
+      btn.classList.remove('liked');
+    }
+  });
+}
+</script>
+{% endblock %}

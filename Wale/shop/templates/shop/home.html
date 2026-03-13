@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Wale Computers & Accessories – Kenya's Tech Store{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="mb-2">
+        <span class="badge badge-accent">🇰🇪 Nairobi, Kenya</span>
+      </div>
+      <h1>Your Trusted Tech Partner in Kenya</h1>
+      <p>Laptops, desktops, accessories & more — quality products at competitive prices with fast delivery across Kenya.</p>
+      <div class="hero-actions">
+        <a href="{% url 'shop:product_list' %}" class="btn btn-accent btn-lg">
+          <i class="fas fa-store"></i> Shop Now
+        </a>
+        <a href="{% url 'community:feed' %}" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,.35)">
+          <i class="fas fa-users"></i> Community
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-value">5,000+</div>
+          <div class="hero-stat-label">Products</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">12K+</div>
+          <div class="hero-stat-label">Happy Customers</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">Same Day</div>
+          <div class="hero-stat-label">Nairobi Delivery</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CATEGORIES ══ -->
+<section class="section">
+  <div class="container">
+    <div class="flex-between section-header">
+      <div>
+        <h2>Browse Categories</h2>
+        <p>Find exactly what you need</p>
+      </div>
+      <a href="{% url 'shop:product_list' %}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1rem">
+      {% for cat in categories %}
+      <a href="{{ cat.get_absolute_url }}" style="text-decoration:none">
+        <div class="card" style="text-align:center;padding:1.5rem .75rem;transition:var(--transition);cursor:pointer" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="font-size:2rem;margin-bottom:.5rem">
+            <i class="fas {{ cat.icon|default:'fa-box' }}"></i>
+          </div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:.88rem;color:var(--primary)">{{ cat.name }}</div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">{{ cat.products.count }} items</div>
+        </div>
+      </a>
+      {% empty %}
+        {% for cat_name, icon in default_cats %}
+        <div class="card" style="text-align:center;padding:1.5rem .75rem">
+          <div style="font-size:2rem;margin-bottom:.5rem">{{ icon }}</div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:.88rem;color:var(--primary)">{{ cat_name }}</div>
+        </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURED PRODUCTS ══ -->
+{% if featured %}
+<section class="section" style="background:var(--surface-2);padding:3rem 0">
+  <div class="container">
+    <div class="flex-between section-header">
+      <div>
+        <h2>⭐ Featured Products</h2>
+        <p>Hand-picked just for you</p>
+      </div>
+      <a href="{% url 'shop:product_list' %}" class="btn btn-outline btn-sm">See All</a>
+    </div>
+    <div class="products-grid">
+      {% for product in featured %}
+        {% include 'shop/_product_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ MPESA PROMO BANNER ══ -->
+<section class="section">
+  <div class="container">
+    <div style="background:linear-gradient(135deg,#00a651,#007a3d);border-radius:var(--radius-lg);padding:2rem 2.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
+      <div style="color:#fff">
+        <div style="font-size:1.75rem;font-weight:800;font-family:var(--font-display);margin-bottom:.4rem">
+          Pay with <span style="color:#ffdd00">M-Pesa</span>
+        </div>
+        <p style="margin:0;opacity:.9;font-size:.95rem">Fast, secure & familiar. Pay easily with your M-Pesa on all orders.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:2rem;color:#fff">
+        <div style="text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display)">522522</div>
+          <div style="font-size:.78rem;opacity:.75">Paybill</div>
+        </div>
+        <div style="width:1px;height:40px;background:rgba(255,255,255,.3)"></div>
+        <div style="text-align:center">
+          <div style="font-size:1.4rem;font-weight:800;font-family:var(--font-display)">5530150</div>
+          <div style="font-size:.78rem;opacity:.75">Account No.</div>
+        </div>
+        <a href="{% url 'shop:product_list' %}" class="btn" style="background:#fff;color:#007a3d;border-color:#fff">
+          Shop Now →
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ NEW ARRIVALS ══ -->
+{% if new_arrivals %}
+<section class="section">
+  <div class="container">
+    <div class="flex-between section-header">
+      <div>
+        <h2>🆕 New Arrivals</h2>
+        <p>Fresh stock just landed</p>
+      </div>
+      <a href="{% url 'shop:product_list' %}?sort=-created_at" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="products-grid">
+      {% for product in new_arrivals %}
+        {% include 'shop/_product_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ TOP RATED ══ -->
+{% if top_rated %}
+<section class="section" style="background:var(--surface-2);padding:3rem 0">
+  <div class="container">
+    <div class="flex-between section-header">
+      <div>
+        <h2>🏆 Top Rated</h2>
+        <p>Loved by our customers</p>
+      </div>
+    </div>
+    <div class="products-grid">
+      {% for product in top_rated %}
+        {% include 'shop/_product_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ WHY WALE ══ -->
+<section class="section">
+  <div class="container">
+    <h2 class="text-center mb-4">Why Choose Wale Computers?</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem">
+      {% for item in features %}
+      <div class="card card-body text-center" style="padding:2rem 1.5rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">{{ item.icon }}</div>
+        <h4 style="margin-bottom:.4rem">{{ item.title }}</h4>
+        <p style="color:var(--text-muted);font-size:.88rem;margin:0">{{ item.desc }}</p>
+      </div>
+      {% empty %}
+        {% for icon, title, desc in why_items %}
+        <div class="card card-body text-center">
+          <div style="font-size:2.5rem;margin-bottom:.75rem">{{ icon }}</div>
+          <h4>{{ title }}</h4>
+          <p style="color:var(--text-muted);font-size:.88rem;margin:0">{{ desc }}</p>
+        </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

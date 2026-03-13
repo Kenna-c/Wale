@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}My Favorites | Wale Computers{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem">
+  <div class="flex-between section-header" style="margin-bottom:1.5rem">
+    <div>
+      <h2>❤️ My Favorites</h2>
+      <p style="color:var(--text-muted);margin:0">{{ favorites|length }} saved item{{ favorites|length|pluralize }}</p>
+    </div>
+    <a href="{% url 'shop:product_list' %}" class="btn btn-outline btn-sm">Browse Products</a>
+  </div>
+
+  {% if favorites %}
+    <div class="fav-grid">
+      {% for fav in favorites %}
+        {% with product=fav.product %}
+          {% include 'shop/_product_card.html' %}
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state card card-body">
+      <div class="empty-state-icon">❤️</div>
+      <h3>No saved items yet</h3>
+      <p>Browse products and hit the heart icon to save items you love.</p>
+      <a href="{% url 'shop:product_list' %}" class="btn btn-primary">Explore Products</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+
+{# ===================================================== #}
+{# shop/search.html #}
+{# ===================================================== #}
